@@ -125,13 +125,13 @@ Define your tests as methods beginning with `test_`.
 
     describe "when asked about cheeseburgers" do
       it "must respond positively" do
-        @meme.i_can_has_cheezburger?.must_equal "OHAI!"
+        @meme.i_can_has_cheezburger?.to_equal "OHAI!"
       end
     end
 
     describe "when asked about blending possibilities" do
       it "won't say no" do
-        @meme.will_it_blend?.wont_match /^no/i
+        @meme.will_it_blend?.not_to_match /^no/i
       end
     end
   end
@@ -363,7 +363,7 @@ The following implementation and test:
       end
 
       it "must respond to work" do
-        @worker.must_respond_to :work
+        @worker.to_respond_to :work
       end
     end
 

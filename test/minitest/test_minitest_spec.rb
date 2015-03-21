@@ -32,50 +32,50 @@ describe Minitest::Spec do
   end
 
   after do
-    _(self.assertions).must_equal @assertion_count if passed? and not skipped?
+    _(self.assertions).to_equal @assertion_count if passed? and not skipped?
   end
 
   it "needs to be able to catch a Minitest::Assertion exception" do
     @assertion_count = 1
 
     assert_triggered "Expected 1 to not be equal to 1." do
-      1.wont_equal 1
+      1.not_to_equal 1
     end
   end
 
-  it "needs to be sensible about must_include order" do
-    @assertion_count += 3 # must_include is 2 assertions
+  it "needs to be sensible about to_include order" do
+    @assertion_count += 3 # to_include is 2 assertions
 
-    [1, 2, 3].must_include(2).must_equal true
+    [1, 2, 3].to_include(2).to_equal true
 
     assert_triggered "Expected [1, 2, 3] to include 5." do
-      [1, 2, 3].must_include 5
+      [1, 2, 3].to_include 5
     end
 
     assert_triggered "msg.\nExpected [1, 2, 3] to include 5." do
-      [1, 2, 3].must_include 5, "msg"
+      [1, 2, 3].to_include 5, "msg"
     end
   end
 
-  it "needs to be sensible about wont_include order" do
-    @assertion_count += 3 # wont_include is 2 assertions
+  it "needs to be sensible about not_to_include order" do
+    @assertion_count += 3 # not_to_include is 2 assertions
 
-    [1, 2, 3].wont_include(5).must_equal false
+    [1, 2, 3].not_to_include(5).to_equal false
 
     assert_triggered "Expected [1, 2, 3] to not include 2." do
-      [1, 2, 3].wont_include 2
+      [1, 2, 3].not_to_include 2
     end
 
     assert_triggered "msg.\nExpected [1, 2, 3] to not include 2." do
-      [1, 2, 3].wont_include 2, "msg"
+      [1, 2, 3].not_to_include 2, "msg"
     end
   end
 
   it "needs to catch an expected exception" do
     @assertion_count = 2
 
-    proc { raise "blah" }.must_raise RuntimeError
-    proc { raise Minitest::Assertion }.must_raise Minitest::Assertion
+    proc { raise "blah" }.to_raise RuntimeError
+    proc { raise Minitest::Assertion }.to_raise Minitest::Assertion
   end
 
   it "needs to catch an unexpected exception" do
@@ -89,11 +89,11 @@ describe Minitest::Spec do
     EOM
 
     assert_triggered msg do
-      proc { raise Minitest::Assertion }.must_raise RuntimeError
+      proc { raise Minitest::Assertion }.to_raise RuntimeError
     end
 
     assert_triggered "msg.\n#{msg}" do
-      proc { raise Minitest::Assertion }.must_raise RuntimeError, "msg"
+      proc { raise Minitest::Assertion }.to_raise RuntimeError, "msg"
     end
   end
 
@@ -101,344 +101,348 @@ describe Minitest::Spec do
     @assertion_count -= 1 # no msg
     @assertion_count += 2 # assert_output is 2 assertions
 
-    proc {  }.must_be_silent.must_equal true
+    proc {  }.to_be_silent.to_equal true
 
     assert_triggered "In stdout.\nExpected: \"\"\n  Actual: \"xxx\"" do
-      proc { print "xxx" }.must_be_silent
+      proc { print "xxx" }.to_be_silent
     end
   end
 
   it "needs to have all methods named well" do
     @assertion_count = 2
 
-    methods = Object.public_instance_methods.find_all { |n| n =~ /^must|^wont/ }
+    methods = Object.public_instance_methods.find_all { |n| n =~ /^to|^wont/ }
     methods.map!(&:to_s) if Symbol === methods.first
 
-    musts, wonts = methods.sort.partition { |m| m =~ /^must/ }
+    musts, wonts = methods.sort.partition { |m| m =~ /^to/ }
 
-    expected_musts = %w[must_be
-                        must_be_close_to
-                        must_be_empty
-                        must_be_instance_of
-                        must_be_kind_of
-                        must_be_nil
-                        must_be_same_as
-                        must_be_silent
-                        must_be_within_delta
-                        must_be_within_epsilon
-                        must_equal
-                        must_include
-                        must_match
-                        must_output
-                        must_raise
-                        must_respond_to
-                        must_throw]
+    expected_musts = %w[to_be
+                        to_be_close_to
+                        to_be_empty
+                        to_be_instance_of
+                        to_be_kind_of
+                        to_be_nil
+                        to_be_same_as
+                        to_be_silent
+                        to_be_within_delta
+                        to_be_within_epsilon
+                        to_equal
+                        to_include
+                        to_match
+                        to_output
+                        to_raise
+                        to_respond_to
+                        to_throw]
 
     bad = %w[not raise throw send output be_silent]
+    rejected = %w[to_enum to_s]
 
-    expected_wonts = expected_musts.map { |m| m.sub(/^must/, "wont") }
-    expected_wonts.reject! { |m| m =~ /wont_#{Regexp.union(*bad)}/ }
+    expected_wonts = expected_musts.map { |m| m.sub(/^to_/, "not_to_") }
+    expected_wonts.reject! { |m| m =~ /not_to_#{Regexp.union(*bad)}/ }
 
-    musts.must_equal expected_musts
-    wonts.must_equal expected_wonts
+    musts.reject! { |m| m =~ Regexp.union(*rejected) }
+    wonts.reject! { |m| m =~ Regexp.union(*rejected) }
+
+    musts.to_equal expected_musts
+    wonts.not_to_equal expected_wonts
   end
 
   it "needs to raise if an expected exception is not raised" do
     @assertion_count -= 2 # no positive test
 
     assert_triggered "RuntimeError expected but nothing was raised." do
-      proc { 42 }.must_raise RuntimeError
+      proc { 42 }.to_raise RuntimeError
     end
 
     assert_triggered "msg.\nRuntimeError expected but nothing was raised." do
-      proc { 42 }.must_raise RuntimeError, "msg"
+      proc { 42 }.to_raise RuntimeError, "msg"
     end
   end
 
   it "needs to verify binary messages" do
-    42.wont_be(:<, 24).must_equal false
+    42.not_to_be(:<, 24).to_equal false
 
     assert_triggered "Expected 24 to not be < 42." do
-      24.wont_be :<, 42
+      24.not_to_be :<, 42
     end
 
     assert_triggered "msg.\nExpected 24 to not be < 42." do
-      24.wont_be :<, 42, "msg"
+      24.not_to_be :<, 42, "msg"
     end
   end
 
   it "needs to verify emptyness" do
     @assertion_count += 3 # empty is 2 assertions
 
-    [].must_be_empty.must_equal true
+    [].to_be_empty.to_equal true
 
     assert_triggered "Expected [42] to be empty." do
-      [42].must_be_empty
+      [42].to_be_empty
     end
 
     assert_triggered "msg.\nExpected [42] to be empty." do
-      [42].must_be_empty "msg"
+      [42].to_be_empty "msg"
     end
   end
 
   it "needs to verify equality" do
-    (6 * 7).must_equal(42).must_equal true
+    (6 * 7).to_equal(42).to_equal true
 
     assert_triggered "Expected: 42\n  Actual: 54" do
-      (6 * 9).must_equal 42
+      (6 * 9).to_equal 42
     end
 
     assert_triggered "msg.\nExpected: 42\n  Actual: 54" do
-      (6 * 9).must_equal 42, "msg"
+      (6 * 9).to_equal 42, "msg"
     end
   end
 
   it "needs to verify floats outside a delta" do
     @assertion_count += 1 # extra test
 
-    24.wont_be_close_to(42).must_equal false
+    24.not_to_be_close_to(42).to_equal false
 
     assert_triggered "Expected |42 - 42.0| (0.0) to not be <= 0.001." do
-      (6 * 7.0).wont_be_close_to 42
+      (6 * 7.0).not_to_be_close_to 42
     end
 
     x = maglev? ? "1.0000000000000001e-05" : "1.0e-05"
     assert_triggered "Expected |42 - 42.0| (0.0) to not be <= #{x}." do
-      (6 * 7.0).wont_be_close_to 42, 0.00001
+      (6 * 7.0).not_to_be_close_to 42, 0.00001
     end
 
     assert_triggered "msg.\nExpected |42 - 42.0| (0.0) to not be <= #{x}." do
-      (6 * 7.0).wont_be_close_to 42, 0.00001, "msg"
+      (6 * 7.0).not_to_be_close_to 42, 0.00001, "msg"
     end
   end
 
   it "needs to verify floats outside an epsilon" do
     @assertion_count += 1 # extra test
 
-    24.wont_be_within_epsilon(42).must_equal false
+    24.not_to_be_within_epsilon(42).to_equal false
 
     x = maglev? ? "0.042000000000000003" : "0.042"
     assert_triggered "Expected |42 - 42.0| (0.0) to not be <= #{x}." do
-      (6 * 7.0).wont_be_within_epsilon 42
+      (6 * 7.0).not_to_be_within_epsilon 42
     end
 
     x = maglev? ? "0.00042000000000000002" : "0.00042"
     assert_triggered "Expected |42 - 42.0| (0.0) to not be <= #{x}." do
-      (6 * 7.0).wont_be_within_epsilon 42, 0.00001
+      (6 * 7.0).not_to_be_within_epsilon 42, 0.00001
     end
 
     assert_triggered "msg.\nExpected |42 - 42.0| (0.0) to not be <= #{x}." do
-      (6 * 7.0).wont_be_within_epsilon 42, 0.00001, "msg"
+      (6 * 7.0).not_to_be_within_epsilon 42, 0.00001, "msg"
     end
   end
 
   it "needs to verify floats within a delta" do
     @assertion_count += 1 # extra test
 
-    (6.0 * 7).must_be_close_to(42.0).must_equal true
+    (6.0 * 7).to_be_close_to(42.0).to_equal true
 
     assert_triggered "Expected |0.0 - 0.01| (0.01) to be <= 0.001." do
-      (1.0 / 100).must_be_close_to 0.0
+      (1.0 / 100).to_be_close_to 0.0
     end
 
     x = maglev? ? "9.9999999999999995e-07" : "1.0e-06"
     assert_triggered "Expected |0.0 - 0.001| (0.001) to be <= #{x}." do
-      (1.0 / 1000).must_be_close_to 0.0, 0.000001
+      (1.0 / 1000).to_be_close_to 0.0, 0.000001
     end
 
     assert_triggered "msg.\nExpected |0.0 - 0.001| (0.001) to be <= #{x}." do
-      (1.0 / 1000).must_be_close_to 0.0, 0.000001, "msg"
+      (1.0 / 1000).to_be_close_to 0.0, 0.000001, "msg"
     end
   end
 
   it "needs to verify floats within an epsilon" do
     @assertion_count += 1 # extra test
 
-    (6.0 * 7).must_be_within_epsilon(42.0).must_equal true
+    (6.0 * 7).to_be_within_epsilon(42.0).to_equal true
 
     assert_triggered "Expected |0.0 - 0.01| (0.01) to be <= 0.0." do
-      (1.0 / 100).must_be_within_epsilon 0.0
+      (1.0 / 100).to_be_within_epsilon 0.0
     end
 
     assert_triggered "Expected |0.0 - 0.001| (0.001) to be <= 0.0." do
-      (1.0 / 1000).must_be_within_epsilon 0.0, 0.000001
+      (1.0 / 1000).to_be_within_epsilon 0.0, 0.000001
     end
 
     assert_triggered "msg.\nExpected |0.0 - 0.001| (0.001) to be <= 0.0." do
-      (1.0 / 1000).must_be_within_epsilon 0.0, 0.000001, "msg"
+      (1.0 / 1000).to_be_within_epsilon 0.0, 0.000001, "msg"
     end
   end
 
   it "needs to verify identity" do
-    1.must_be_same_as(1).must_equal true
+    1.to_be_same_as(1).to_equal true
 
     assert_triggered "Expected 1 (oid=N) to be the same as 2 (oid=N)." do
-      1.must_be_same_as 2
+      1.to_be_same_as 2
     end
 
     assert_triggered "msg.\nExpected 1 (oid=N) to be the same as 2 (oid=N)." do
-      1.must_be_same_as 2, "msg"
+      1.to_be_same_as 2, "msg"
     end
   end
 
   it "needs to verify inequality" do
-    42.wont_equal(6 * 9).must_equal false
+    42.not_to_equal(6 * 9).to_equal false
 
     assert_triggered "Expected 1 to not be equal to 1." do
-      1.wont_equal 1
+      1.not_to_equal 1
     end
 
     assert_triggered "msg.\nExpected 1 to not be equal to 1." do
-      1.wont_equal 1, "msg"
+      1.not_to_equal 1, "msg"
     end
   end
 
   it "needs to verify instances of a class" do
-    42.wont_be_instance_of(String).must_equal false
+    42.not_to_be_instance_of(String).to_equal false
 
     assert_triggered "Expected 42 to not be an instance of Fixnum." do
-      42.wont_be_instance_of Fixnum
+      42.not_to_be_instance_of Fixnum
     end
 
     assert_triggered "msg.\nExpected 42 to not be an instance of Fixnum." do
-      42.wont_be_instance_of Fixnum, "msg"
+      42.not_to_be_instance_of Fixnum, "msg"
     end
   end
 
   it "needs to verify kinds of a class" do
-    42.wont_be_kind_of(String).must_equal false
+    42.not_to_be_kind_of(String).to_equal false
 
     assert_triggered "Expected 42 to not be a kind of Integer." do
-      42.wont_be_kind_of Integer
+      42.not_to_be_kind_of Integer
     end
 
     assert_triggered "msg.\nExpected 42 to not be a kind of Integer." do
-      42.wont_be_kind_of Integer, "msg"
+      42.not_to_be_kind_of Integer, "msg"
     end
   end
 
   it "needs to verify kinds of objects" do
     @assertion_count += 2 # extra test
 
-    (6 * 7).must_be_kind_of(Fixnum).must_equal true
-    (6 * 7).must_be_kind_of(Numeric).must_equal true
+    (6 * 7).to_be_kind_of(Fixnum).to_equal true
+    (6 * 7).to_be_kind_of(Numeric).to_equal true
 
     assert_triggered "Expected 42 to be a kind of String, not Fixnum." do
-      (6 * 7).must_be_kind_of String
+      (6 * 7).to_be_kind_of String
     end
 
     assert_triggered "msg.\nExpected 42 to be a kind of String, not Fixnum." do
-      (6 * 7).must_be_kind_of String, "msg"
+      (6 * 7).to_be_kind_of String, "msg"
     end
   end
 
   it "needs to verify mismatch" do
     @assertion_count += 3 # match is 2
 
-    "blah".wont_match(/\d+/).must_equal false
+    "blah".not_to_match(/\d+/).to_equal false
 
     assert_triggered "Expected /\\w+/ to not match \"blah\"." do
-      "blah".wont_match(/\w+/)
+      "blah".not_to_match(/\w+/)
     end
 
     assert_triggered "msg.\nExpected /\\w+/ to not match \"blah\"." do
-      "blah".wont_match(/\w+/, "msg")
+      "blah".not_to_match(/\w+/, "msg")
     end
   end
 
   it "needs to verify nil" do
-    nil.must_be_nil.must_equal true
+    nil.to_be_nil.to_equal true
 
     assert_triggered "Expected 42 to be nil." do
-      42.must_be_nil
+      42.to_be_nil
     end
 
     assert_triggered "msg.\nExpected 42 to be nil." do
-      42.must_be_nil "msg"
+      42.to_be_nil "msg"
     end
   end
 
   it "needs to verify non-emptyness" do
     @assertion_count += 3 # empty is 2 assertions
 
-    ["some item"].wont_be_empty.must_equal false
+    ["some item"].not_to_be_empty.to_equal false
 
     assert_triggered "Expected [] to not be empty." do
-      [].wont_be_empty
+      [].not_to_be_empty
     end
 
     assert_triggered "msg.\nExpected [] to not be empty." do
-      [].wont_be_empty "msg"
+      [].not_to_be_empty "msg"
     end
   end
 
   it "needs to verify non-identity" do
-    1.wont_be_same_as(2).must_equal false
+    1.not_to_be_same_as(2).to_equal false
 
     assert_triggered "Expected 1 (oid=N) to not be the same as 1 (oid=N)." do
-      1.wont_be_same_as 1
+      1.not_to_be_same_as 1
     end
 
     assert_triggered "msg.\nExpected 1 (oid=N) to not be the same as 1 (oid=N)." do
-      1.wont_be_same_as 1, "msg"
+      1.not_to_be_same_as 1, "msg"
     end
   end
 
   it "needs to verify non-nil" do
-    42.wont_be_nil.must_equal false
+    42.not_to_be_nil.to_equal false
 
     assert_triggered "Expected nil to not be nil." do
-      nil.wont_be_nil
+      nil.not_to_be_nil
     end
 
     assert_triggered "msg.\nExpected nil to not be nil." do
-      nil.wont_be_nil "msg"
+      nil.not_to_be_nil "msg"
     end
   end
 
   it "needs to verify objects not responding to a message" do
-    "".wont_respond_to(:woot!).must_equal false
+    "".not_to_respond_to(:woot!).to_equal false
 
     assert_triggered "Expected \"\" to not respond to to_s." do
-      "".wont_respond_to :to_s
+      "".not_to_respond_to :to_s
     end
 
     assert_triggered "msg.\nExpected \"\" to not respond to to_s." do
-      "".wont_respond_to :to_s, "msg"
+      "".not_to_respond_to :to_s, "msg"
     end
   end
 
   it "needs to verify output in stderr" do
     @assertion_count -= 1 # no msg
 
-    proc { $stderr.print "blah" }.must_output(nil, "blah").must_equal true
+    proc { $stderr.print "blah" }.to_output(nil, "blah").to_equal true
 
     assert_triggered "In stderr.\nExpected: \"blah\"\n  Actual: \"xxx\"" do
-      proc { $stderr.print "xxx" }.must_output(nil, "blah")
+      proc { $stderr.print "xxx" }.to_output(nil, "blah")
     end
   end
 
   it "needs to verify output in stdout" do
     @assertion_count -= 1 # no msg
 
-    proc { print "blah" }.must_output("blah").must_equal true
+    proc { print "blah" }.to_output("blah").to_equal true
 
     assert_triggered "In stdout.\nExpected: \"blah\"\n  Actual: \"xxx\"" do
-      proc { print "xxx" }.must_output("blah")
+      proc { print "xxx" }.to_output("blah")
     end
   end
 
   it "needs to verify regexp matches" do
-    @assertion_count += 3 # must_match is 2 assertions
+    @assertion_count += 3 # to_match is 2 assertions
 
-    "blah".must_match(/\w+/).must_equal true
+    "blah".to_match(/\w+/).to_equal true
 
     assert_triggered "Expected /\\d+/ to match \"blah\"." do
-      "blah".must_match(/\d+/)
+      "blah".to_match(/\d+/)
     end
 
     assert_triggered "msg.\nExpected /\\d+/ to match \"blah\"." do
-      "blah".must_match(/\d+/, "msg")
+      "blah".to_match(/\d+/, "msg")
     end
   end
 
@@ -448,20 +452,20 @@ describe Minitest::Spec do
     end
 
     it "can use expect" do
-      _(1 + 1).must_equal 2
+      _(1 + 1).to_equal 2
     end
 
     it "can use expect with a lambda" do
-      _ { raise "blah" }.must_raise RuntimeError
+      _ { raise "blah" }.to_raise RuntimeError
     end
 
     it "can use expect in a thread" do
-      Thread.new { _(1 + 1).must_equal 2 }.join
+      Thread.new { _(1 + 1).to_equal 2 }.join
     end
 
-    it "can NOT use must_equal in a thread. It must use expect in a thread" do
+    it "can NOT use to_equal in a thread. It must use expect in a thread" do
       assert_raises NoMethodError do
-        Thread.new { (1 + 1).must_equal 2 }.join
+        Thread.new { (1 + 1).to_equal 2 }.join
       end
     end
   end
@@ -469,78 +473,78 @@ describe Minitest::Spec do
   it "needs to verify throw" do
     @assertion_count += 2 # 2 extra tests
 
-    proc { throw :blah }.must_throw(:blah).must_equal true
+    proc { throw :blah }.to_throw(:blah).to_equal true
 
     assert_triggered "Expected :blah to have been thrown." do
-      proc { }.must_throw :blah
+      proc { }.to_throw :blah
     end
 
     assert_triggered "Expected :blah to have been thrown, not :xxx." do
-      proc { throw :xxx }.must_throw :blah
+      proc { throw :xxx }.to_throw :blah
     end
 
     assert_triggered "msg.\nExpected :blah to have been thrown." do
-      proc { }.must_throw :blah, "msg"
+      proc { }.to_throw :blah, "msg"
     end
 
     assert_triggered "msg.\nExpected :blah to have been thrown, not :xxx." do
-      proc { throw :xxx }.must_throw :blah, "msg"
+      proc { throw :xxx }.to_throw :blah, "msg"
     end
   end
 
   it "needs to verify types of objects" do
-    (6 * 7).must_be_instance_of(Fixnum).must_equal true
+    (6 * 7).to_be_instance_of(Fixnum).to_equal true
 
     exp = "Expected 42 to be an instance of String, not Fixnum."
 
     assert_triggered exp do
-      (6 * 7).must_be_instance_of String
+      (6 * 7).to_be_instance_of String
     end
 
     assert_triggered "msg.\n#{exp}" do
-      (6 * 7).must_be_instance_of String, "msg"
+      (6 * 7).to_be_instance_of String, "msg"
     end
   end
 
   it "needs to verify using any (negative) predicate" do
     @assertion_count -= 1 # doesn"t take a message
 
-    "blah".wont_be(:empty?).must_equal false
+    "blah".not_to_be(:empty?).to_equal false
 
     assert_triggered "Expected \"\" to not be empty?." do
-      "".wont_be :empty?
+      "".not_to_be :empty?
     end
   end
 
   it "needs to verify using any binary operator" do
     @assertion_count -= 1 # no msg
 
-    41.must_be(:<, 42).must_equal true
+    41.to_be(:<, 42).to_equal true
 
     assert_triggered "Expected 42 to be < 41." do
-      42.must_be(:<, 41)
+      42.to_be(:<, 41)
     end
   end
 
   it "needs to verify using any predicate" do
     @assertion_count -= 1 # no msg
 
-    "".must_be(:empty?).must_equal true
+    "".to_be(:empty?).to_equal true
 
     assert_triggered "Expected \"blah\" to be empty?." do
-      "blah".must_be :empty?
+      "blah".to_be :empty?
     end
   end
 
   it "needs to verify using respond_to" do
-    42.must_respond_to(:+).must_equal true
+    42.to_respond_to(:+).to_equal true
 
     assert_triggered "Expected 42 (Fixnum) to respond to #clear." do
-      42.must_respond_to :clear
+      42.to_respond_to :clear
     end
 
     assert_triggered "msg.\nExpected 42 (Fixnum) to respond to #clear." do
-      42.must_respond_to :clear, "msg"
+      42.to_respond_to :clear, "msg"
     end
   end
 end
@@ -558,29 +562,29 @@ describe Minitest::Spec, :let do
   end
 
   it "is evaluated once per example" do
-    _count.must_equal 0
+    _count.to_equal 0
 
-    count.must_equal 1
-    count.must_equal 1
+    count.to_equal 1
+    count.to_equal 1
 
-    _count.must_equal 1
+    _count.to_equal 1
   end
 
   it "is REALLY evaluated once per example" do
-    _count.must_equal 1
+    _count.to_equal 1
 
-    count.must_equal 2
-    count.must_equal 2
+    count.to_equal 2
+    count.to_equal 2
 
-    _count.must_equal 2
+    _count.to_equal 2
   end
 
   it 'raises an error if the name begins with "test"' do
-    proc { self.class.let(:test_value) { true } }.must_raise ArgumentError
+    proc { self.class.let(:test_value) { true } }.to_raise ArgumentError
   end
 
   it "raises an error if the name shadows a normal instance method" do
-    proc { self.class.let(:message) { true } }.must_raise ArgumentError
+    proc { self.class.let(:message) { true } }.to_raise ArgumentError
   end
 
   it "doesn't raise an error if it is just another let" do
@@ -592,13 +596,13 @@ describe Minitest::Spec, :let do
         end
       end
       :good
-    end.call.must_equal :good
+    end.call.to_equal :good
   end
 
   it "procs come after dont_flip" do
     p = proc { }
     assert_respond_to p, :call
-    p.must_respond_to :call
+    p.to_respond_to :call
   end
 end
 
@@ -612,9 +616,9 @@ describe Minitest::Spec, :subject do
   end
 
   it "is evaluated once per example" do
-    subject.must_equal 1
-    subject.must_equal 1
-    subject_evaluation_count.must_equal 1
+    subject.to_equal 1
+    subject.to_equal 1
+    subject_evaluation_count.to_equal 1
   end
 end
 
@@ -637,7 +641,7 @@ class TestMetaStatic < Minitest::Test
     assert_equal [], z.children
   end
 
-  def test_it_wont_remove_existing_child_test_methods
+  def test_it_not_to_remove_existing_child_test_methods
     Minitest::Spec.children.clear # prevents parallel run
 
     inner = nil
@@ -656,7 +660,7 @@ class TestMetaStatic < Minitest::Test
     assert_equal 1, inner.public_instance_methods.grep(/^test_/).count
   end
 
-  def test_it_wont_add_test_methods_to_children
+  def test_it_not_to_add_test_methods_to_children
     Minitest::Spec.children.clear # prevents parallel run
 
     inner = nil
@@ -745,7 +749,7 @@ class TestMeta < MetaMetaMetaTestCase
   def test_bug_dsl_expectations
     spec_class = Class.new MiniSpecB do
       it "should work" do
-        0.must_equal 0
+        0.to_equal 0
       end
     end
 
@@ -897,18 +901,18 @@ class TestSpecInTestCase < MetaMetaMetaTestCase
   end
 
   def test_expectation
-    @tc.assert_equal true, 1.must_equal(1)
+    @tc.assert_equal true, 1.to_equal(1)
   end
 
   def test_expectation_triggered
     assert_triggered "Expected: 2\n  Actual: 1" do
-      1.must_equal 2
+      1.to_equal 2
     end
   end
 
   def test_expectation_with_a_message
     assert_triggered "woot.\nExpected: 2\n  Actual: 1" do
-      1.must_equal 2, "woot"
+      1.to_equal 2, "woot"
     end
   end
 end

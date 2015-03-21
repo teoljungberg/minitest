@@ -277,7 +277,7 @@ module Minitest
     #
     # This is really meant for specs and is front-ended by assert_operator:
     #
-    #   str.must_be :empty?
+    #   str.to_be :empty?
 
     def assert_predicate o1, op, msg = nil
       msg = message(msg) { "Expected #{mu_pp(o1)} to be #{op}" }
@@ -613,7 +613,7 @@ module Minitest
     #
     # This is really meant for specs and is front-ended by refute_operator:
     #
-    #   str.wont_be :empty?
+    #   str.not_to_be :empty?
 
     def refute_predicate o1, op, msg = nil
       msg = message(msg) { "Expected #{mu_pp(o1)} to not be #{op}" }

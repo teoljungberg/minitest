@@ -19,18 +19,18 @@ task :specs do
   require "minitest/unit"
   require "minitest/spec"
 
-  pos_prefix, neg_prefix = "must", "wont"
-  skip_re = /^(must|wont)$|wont_(throw)|must_(block|not?_|nothing|raise$)/x
-  dont_flip_re = /(must|wont)_(include|respond_to)/
+  pos_prefix, neg_prefix = "to", "not_to"
+  skip_re = /^(to|not_to)$|not_to_(throw)|to_(block|not?_|nothing|raise$)/x
+  dont_flip_re = /(to|not_to)_(include|respond_to)/
 
   map = {
-    /(must_throw)s/                        => '\1',
+    /(to_throw)s/                          => '\1',
     /(?!not)_same/                         => "_be_same_as",
     /_in_/                                 => "_be_within_",
     /_operator/                            => "_be",
     /_includes/                            => "_include",
-    /(must|wont)_(.*_of|nil|silent|empty)/ => '\1_be_\2',
-    /must_raises/                          => "must_raise",
+    /(to|not_to)_(.*_of|nil|silent|empty)/ => '\1_be_\2',
+    /to_raises/                            => "to_raise",
   }
 
   expectations = Minitest::Expectations.public_instance_methods.map(&:to_s)

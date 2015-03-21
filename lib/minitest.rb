@@ -653,7 +653,7 @@ module Minitest
     def location
       last_before_assertion = ""
       self.backtrace.reverse_each do |s|
-        break if s =~ /in .(assert|refute|flunk|pass|fail|raise|must|wont)/
+        break if s =~ /in .(assert|refute|flunk|pass|fail|raise|to|not_to)/
         last_before_assertion = s
       end
       last_before_assertion.sub(/:in .*$/, "")
